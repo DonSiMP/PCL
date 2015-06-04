@@ -1,0 +1,41 @@
+/*
+  sap ԭʼ
+*/
+int augment(int u,int augc){
+    if(u==t)return augc;
+    int d,tmp=n-1;
+    for(edge *i=e[u];i;i=i->next)if(i->cap){
+        if(dis[u]==dis[i->aim]+1){
+            d=augment(i->aim,augc<i->cap?augc:i->cap);
+            i->cap-=d,i->pair->cap+=d;
+            if(d||dis[s]==n)return d;
+            }
+        if(dis[i->aim]<tmp)tmp=dis[i->aim];
+        }
+    if(!--num[dis[u]])dis[s]=n;
+    num[dis[u]=tmp+1]++;
+    return 0;
+ }
+
+int main(){
+    freopen("ditch.in","r",stdin);
+    freopen("ditch.out","w",stdout);
+    scanf("%d %d",&m,&n);
+    memset(e,0,sizeof(e));
+    while(m--)
+    {
+        int s,t,u;
+        scanf("%d %d %d",&s,&t,&u);
+        e[s]=new(Pe++)edge(t,u,e[s]);
+        e[t]=new(Pe++)edge(s,0,e[t]);
+        e[s]->pair=e[t];
+        e[t]->pair=e[s];
+    }
+    memset(dis,0,sizeof(dis));
+    memset(num,0,sizeof(num)),num[0]=n;
+    int flow=0;
+    s=1,t=n;
+    while(dis[s]<n)flow+=augment(s,0xfffff);
+    printf("%d\n",flow);
+    return 0;
+    }

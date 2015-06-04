@@ -1,0 +1,156 @@
+/*
+无向图的tarjan算法，可以处理两点间不止一条边的情况
+对于栈溢出，相应的扩栈
+图的链式前向星存储方式
+树的最长链
+*/
+
+#pragma comment(linker, "/STACK:1024000000,1024000000")
+#include <iostream>
+#include <cstring>
+#include <cstdio>
+#include <vector>
+#include <cmath>
+#include <stack>
+#include <algorithm>
+using namespace std;
+int n,m;
+vector<int> mp[200010];
+struct edge
+{
+    int from;
+    int to;
+    int next;
+};
+edge e[2000020];
+int head[200020];
+stack<int> stk;
+//int stk[200010];
+int stkCnt=0;
+int flag[200010];
+int xx;
+int low[200010];
+int dfn[200010];
+bool vis[200010];
+int cnt=0;
+void tarjan(int s,int pre)
+{
+    low[s]=dfn[s]=cnt++;
+    vis[s]=true;
+    int f=0;
+    stk.push(s);
+    //stk[stkCnt++]=s;
+    for (int i=head[s];i!=-1;i=e[i].next)
+    {
+        int u=e[i].to;
+        if (u==pre){f++; continue;}
+        if (!dfn[u]){
+            tarjan(u,s);
+            low[s]=min(low[s],low[u]);
+        }
+        else if(vis[u])
+            low[s]=min(low[s],dfn[u]);
+    }
+    if (f>=2) return;
+    if (low[s]==dfn[s]){
+            while (true)
+            {
+                //int t=stk[--stkCnt];//stk.pop();
+                int t=stk.top();stk.pop();
+                flag[t]=xx;
+                vis[t]=false;
+                if (t==s)
+                {
+                    break;
+                }
+            }
+            xx++;
+    }
+}
+vector<int> *nMp;//[200010];
+void build(int n)
+{
+  /*  for (int i=1;i<=n;i++)
+   {
+       for (int j=head[i];j!=-1;j=e[j].next)
+       {
+           if (flag[e[j].to]!=flag[i])
+           {
+               nMp[flag[i]].push_back(flag[e[j].to]);
+               nMp[flag[e[j].to]].push_back(flag[i]);
+           }
+       }
+   }*/
+   for (int i=0;i<n;i++)
+   {
+       int s,t;
+       s=flag[e[i*2].from];
+       t=flag[e[i*2].to];
+       if (s!=t)
+       {
+           nMp[s].push_back(t);
+           nMp[t].push_back(s);
+       }
+   }
+}
+
+int ans,root;
+void dfs(int now,int pre,int cnt)
+{
+    if (ans<=cnt)
+    {
+        ans=cnt;
+        root=now;
+    }
+    for (int i=0;i<nMp[now].size();i++)
+    {
+        if (nMp[now][i]==pre) continue;
+        dfs(nMp[now][i],now,cnt+1);
+    }
+}
+
+int main()
+{
+//	int size = 256 << 20; // 256MB
+//	char *p = (char*)malloc(size) + size;
+//	__asm__("movl %0, %%esp\n" :: "r"(p) );
+
+while (scanf("%d%d",&n,&m)!=EOF)
+{
+    xx=0;
+    memset(flag,-1,sizeof(flag));
+    memset(low,0,sizeof(low));
+    memset(dfn,0,sizeof(dfn));
+    memset(vis,false,sizeof(vis));
+   // memset(stk,0,sizeof(stk));
+    memset(head,-1,sizeof(head));
+    stkCnt=0;
+    for (int i=0;i<n+5;i++) mp[i].clear();
+    if (m+n==0) break;
+    for (int i=0;i<2*m;i++)
+    {
+        int a,b;
+        scanf("%d%d",&a,&b);
+        e[i].to=b;
+        e[i].from=a;
+        e[i].next=head[a];
+        head[a]=i;
+        i++;
+        e[i].to=a;
+        e[i].from=b;
+        e[i].next=head[b];
+        head[b]=i;
+    }
+    tarjan(1,1);
+    nMp=new vector<int>[xx+10];
+    build(m);
+    ans=0;
+    root=0;
+    dfs(0,0,0);
+    dfs(root,root,0);
+    printf("%d\n",xx-1-ans);
+   // delete mp;
+    delete nMp;
+}
+    return 0;
+}

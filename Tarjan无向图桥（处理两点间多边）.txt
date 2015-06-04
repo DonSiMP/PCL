@@ -1,0 +1,92 @@
+Tarjan算法求解桥和边双连通分量
+对于边双连通分量，我们需要先了解一些概念：
+        边连通度：使一个子图不连通所需要删除的最小的边数就是该图的边连通度。
+        桥（割边）：当删除一条边就使得图不连通的那条边称为桥或者是割边。
+        边双连通分量：边连通度大于等于二的子图称为边双连通分量。
+比了一场多校，果断脑残了，这个模板不能处理两个点之间有多条边的情况——话说，其实改起来很简单。呵呵……看注释部分。
+/* 
+ *无向图的桥及边的双连通分量，Tarjan算法O(E) 
+ */  
+#include <cstdio>  
+#include <cstring>  
+using namespace std;  
+#define MAXN 10000  
+#define MAXM 1000000  
+  
+struct node {  
+    int v, w, pre;  //id：边的编号（处理重边情况）  
+} edge[MAXM];  
+int pos[MAXN], nEdge; //图的存储：链式前向星（池子法）  
+  
+struct Bridge {  
+    int u, v;  
+} bridge[MAXM];  //用来记录桥  
+int tot; //桥的个数  
+  
+int fa[MAXN], cc; //fa：各个点所属的缩点（连通块），cc连通块的个数  
+int dfn[MAXN], low[MAXN], time; //时间戳  
+int stack[MAXN], top;   //用于维护连通块的  
+int n, m;   //点的个数和边的条数  
+  
+void connect(int u, int v, int w) {   
+    nEdge++;  
+    edge[nEdge].pre = pos[u];  
+    edge[nEdge].v = v;  
+    edge[nEdge].w = w;  //edge[nEdge].id = id;  
+    pos[u] = nEdge;  
+}  
+  
+void tarjan(int cur, int from) {  
+    low[cur] = dfn[cur] = time++;  
+    stack[++top] = cur;  
+    for (int p=pos[cur]; p; p=edge[p].pre) {  
+        int v = edge[p].v;  
+        if (v == from) continue;  //注意一下这里.   如果是重边的话，改成：if (edge[p].id == from) continue; 给tarjan传参数from的时候，传递的是当前边的id。  
+        if (!dfn[v]) {  
+            tarjan(v, cur);       //多重边：tarjan(v, edge[p].id);  
+            if (low[v] < low[cur]) low[cur] = low[v];  
+            if (low[v] > dfn[cur]) {  
+                bridge[tot].u = cur;  
+                bridge[tot++].v = v;  
+                cc++;  
+                do {  
+                    fa[stack[top]] = cc;  
+                } while (stack[top--] != v);  
+            }  
+        } else if (low[cur] > dfn[v]) low[cur] = dfn[v];  
+    }  
+}  
+int main() {  
+    scanf("%d%d", &n, &m);  
+  
+    memset(pos, 0, sizeof(pos));  
+    nEdge = 0;  
+    int u, v, w;  
+    for (int i=0; i<m; i++) {  
+        scanf("%d%d%d", &u, &v, &w);  
+        connect(u, v, w);  
+        connect(v, u, w);  
+    }  
+  
+    memset(dfn, 0, sizeof(dfn));  
+    memset(fa, -1, sizeof(fa));  
+  
+    cc = tot = 0;  
+    for (int i=1; i<=n; i++)   //可以处理不连通的无向图，如果连通只需要一次即可  
+        if (!dfn[i]) {  
+            top = time = 1;  
+            tarjan(i, -1);  
+            ++cc;  
+            for (int j=1; j<=n; j++)   //特殊处理顶点的连通块  
+                if (dfn[j] && fa[j]==-1) fa[j] = cc;  
+        }  
+  
+    for (int i=1; i<=n; i++)  
+        printf("%d ", fa[i]);  //输出每个节点所属于的连通块（缩点标号）  
+    printf("\n");  
+  
+    for (int i=0; i<tot; i++)  
+        printf("%d %d\n", bridge[i].u, bridge[i].v); //输出所有的桥  
+  
+    return 0;  
+}  
